@@ -47,7 +47,7 @@ export function RoleArticle({
             {projects.map((project) => (
               <li key={project.slug}>
                 <a
-                  href={`/projects/${project.slug}`}
+                  href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/projects/${project.slug}`}
                   onClick={
                     onOpenProject
                       ? (e) => {

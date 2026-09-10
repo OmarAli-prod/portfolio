@@ -128,7 +128,7 @@ export function Desktop({
           id: roleId(r.slug),
           title: r.company,
           meta: r.period,
-          href: `/experience/${r.slug}`,
+          href: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/experience/${r.slug}`,
         })),
       },
       {
