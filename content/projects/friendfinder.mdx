@@ -1,0 +1,39 @@
+---
+title: FriendFinder
+slug: friendfinder
+year: 2024
+order: 8
+cover: /projects/friendfinder.png
+role: Primary author, team of six
+stack: [React, Express, MongoDB, Socket.IO, Docker, nginx, GitHub Actions]
+summary: A social app for connecting students at Zewail City, with interest-based matching, group chat and safety tooling.
+---
+
+
+A responsive web app for connecting students at Zewail City, built by a team of
+six on React and Express.
+
+## Features
+
+Signup and login with bcrypt hashing and JWT sessions, then an analysis and
+recommendation algorithm that pairs students on their stated interests, and a
+matching system built on top of it.
+
+Multi-user chat runs over Socket.IO, with group chats, adding and blocking. Chat
+is designed for public key encryption so messages are not readable off the
+server.
+
+Safety is its own surface: a malicious content flagging system and a chat report
+system, so students can escalate a conversation rather than only leaving it.
+
+## How the team worked
+
+Six people on one codebase needs scaffolding before it needs features.
+
+The whole stack runs under Docker Compose behind nginx, so a new contributor
+gets a working environment from one command instead of a page of setup. GitHub
+Actions builds frontend and backend on every push and pull request against
+`develop`. The repository sets a house style, the Airbnb JavaScript guide, and a
+bug checklist contributors follow before opening an issue. Jest covers unit
+tests with Puppeteer for end to end, Swagger documents the API and Docusaurus
+carries the functional docs.

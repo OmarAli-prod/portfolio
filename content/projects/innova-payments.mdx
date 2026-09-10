@@ -1,0 +1,23 @@
+---
+title: Payment Infrastructure
+slug: innova-payments
+year: 2025
+order: 3
+role: Founding engineer, back-end and DevOps
+stack: [ASP.NET Core, Entity Framework Core, Redis, GitHub Actions, Docker]
+summary: Payment infrastructure with AES encryption and idempotency keys, under 200ms average latency.
+---
+
+{/* TODO: add `cover: /projects/<slug>.png` to the frontmatter above once a real screenshot exists */}
+
+I joined as a founding engineer, so the backend architecture was still open:
+data modeling, auth, and API contracts, built on ASP.NET Core with clean
+architecture.
+
+The payment flows use AES encryption and idempotency keys, so a retried request
+cannot become a duplicate charge. Average API latency stayed under 200ms as the
+feature surface grew over six months, which came down to a modular data layer
+built on Entity Framework Core and Redis.
+
+I also owned the CI/CD pipeline in GitHub Actions, the Dockerized services, and
+Linux VPS operations.

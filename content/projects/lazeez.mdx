@@ -1,0 +1,35 @@
+---
+title: Lazeez
+slug: lazeez
+year: 2025
+order: 9
+role: Contributor, team project
+stack: [Node.js, Express, MongoDB, RabbitMQ, JWT]
+summary: A meal planner for the CBE fintech competition that matches recipes to what a household can actually afford that day.
+cover: /projects/lazeez.jpg
+
+---
+
+
+Most meal planners assume you have already decided what to spend. Lazeez starts
+from monthly income instead and works down: income divided by the days in the
+current month gives a daily budget, split 20/60/20 across breakfast, lunch and
+dinner. Nutrition runs on a parallel track, deriving BMI and a daily calorie
+target from height, weight, gender and activity level, then splitting that
+25/40/35 across the same three meals.
+
+A recipe only reaches the customer if it clears both limits, so suggestions stay
+inside the budget and the calorie target at the same time.
+
+## Architecture
+
+Three Express services over one MongoDB database. The Market module owns
+supermarkets, sellers, ingredients, recipes and orders. The Financial module
+computes budgets. The Meal module handles search and matching.
+
+The two calculations are independent and slow enough not to belong in a request
+cycle, so the services talk over RabbitMQ rather than calling each other
+directly: the budget and calorie figures for each meal are published to their
+own queues, and the Meal module waits on both before it answers. Users are one
+Mongoose model with discriminators for customer, seller and admin, and routes
+are guarded by JWT middleware.

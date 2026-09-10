@@ -1,0 +1,19 @@
+---
+title: Clinical Drug Interactions
+slug: drug-interactions
+year: 2024
+order: 7
+role: Solo project
+stack: [ASP.NET Core, React, SQL Server, EF Core]
+summary: A decision engine covering 10k+ drug combinations at sub-200ms response times.
+---
+
+{/* TODO: add `cover: /projects/<slug>.png` to the frontmatter above once a real screenshot exists */}
+
+A clinical decision engine covering more than 10,000 drug combinations, built
+for live clinical safety workflows. An ETL pipeline pulls FDA data sources into
+SQL Server, and a React dashboard handles filtering.
+
+A join across combination tables is the obvious approach, but its response time
+degrades as the combination count grows. Modeling the interactions as a graph
+and traversing it holds responses under 200ms at scale.

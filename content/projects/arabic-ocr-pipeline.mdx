@@ -1,0 +1,23 @@
+---
+title: Handwritten Arabic OCR
+slug: arabic-ocr-pipeline
+year: 2025
+order: 2
+role: Full-stack developer, Ministry of Endowments
+stack: [Python, OpenCV, EasyOCR, PaddleOCR]
+summary: An OCR pipeline for scanned handwritten Arabic ownership documents, at 99% accuracy.
+featured: true
+cover: /projects/montakhab.png
+---
+
+
+The pipeline takes scanned handwritten Arabic ownership documents from image
+preprocessing in OpenCV through to a structured DOCX output per document.
+
+Handwritten Arabic is the hardest failure mode in OCR, and ligatures are why:
+letters change shape depending on what sits beside them, so character
+segmentation tuned for Latin script does not transfer. Reaching 99% accuracy per
+document meant tuning the preprocessing and the OCR ensemble together rather
+than separately, with most of that attention going to ligatures.
+
+Batch processing dropped from five hours to under ten minutes.

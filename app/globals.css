@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0908;
+  --color-bg-raised: #12100e;
+  --color-bg-chrome: #1a1714;
+  --color-phosphor: #ffb000;
+  --color-phosphor-dim: #b37a00;
+  --color-phosphor-lo: #6b4a00;
+  --color-danger: #ff5f45;
+
+  --font-display: var(--font-endless), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+/* Shape lock made mechanical rather than a rule anyone has to remember. */
+*,
+*::before,
+*::after {
+  border-radius: 0;
+}
+
+html {
+  background: var(--color-bg);
+  color: var(--color-phosphor);
+  font-family: var(--font-mono);
+  /* ENDLESS ships one weight and no italic. Never let the browser fake either. */
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
+
+::selection {
+  background: var(--color-phosphor);
+  color: var(--color-bg);
+}
+
+/* Scrollbars, drawn as panel chrome rather than left to the OS. Square to
+   match the shape lock, amber to match the one accent, with the track carrying
+   the same field lines as the display overlay.
+   The standards properties cover Firefox; the webkit pseudo-elements cover
+   Chromium and Safari, which ignore the standards ones when both are present. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-phosphor-lo) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-phosphor-lo);
+  /* A content-box fill inside a transparent border reads as an inset rail
+     without needing a second element. */
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-phosphor-dim);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-phosphor);
+}
+
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+/* Emission, not bloom. A tight 3px halo reads as a lit pixel; the wide soft
+   glow it replaces read as an out-of-focus tube. */
+.bloom {
+  text-shadow: 0 0 3px color-mix(in srgb, currentColor 40%, transparent);
+}
+
+/* The desktop graticule. A CSS gradient rather than an SVG asset. */
+.graticule {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-phosphor) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-phosphor) 5%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* A window mid-drag or mid-resize. Every effect dropped here is one that
+   forces a full repaint on each frame, which is what makes text shimmer while
+   the window moves. The window keeps its own compositor layer for the duration
+   so the browser can move it without re-rasterizing the text inside. */
+.window-frame.is-busy {
+  will-change: transform;
+  transform: translateZ(0);
+  box-shadow: none !important;
+}
+
+.window-frame.is-busy,
+.window-frame.is-busy * {
+  text-shadow: none !important;
+}
+
+body:has(.window-frame.is-busy) .crt-band {
+  animation-play-state: paused;
+}
+
+/* One pixel on a two pixel cycle: the lit field and the dark field trade
+   places, which is what interlacing physically is.
+   jump-none, not the default: plain steps(2) holds 0 then 0.5px, which lands
+   between the fields and blurs them. jump-none hits both endpoints exactly. */
+@keyframes field-alternate {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 1px, 0);
+  }
+}
+
+/* The band travels by moving its own mask, not the element. That keeps
+   transform free for the flicker above, and keeps the field lines aligned to
+   the viewport instead of sliding along with the band. */
+@keyframes band-travel {
+  from {
+    mask-position: 0 -24vh;
+  }
+  to {
+    mask-position: 0 100vh;
+  }
+}
+
+.crt-band {
+  will-change: transform, mask-position;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 22%,
+    #000 45%,
+    #000 62%,
+    rgba(0, 0, 0, 0.5) 82%,
+    transparent 100%
+  );
+  mask-size: 100% 24vh;
+  mask-repeat: no-repeat;
+  animation:
+    band-travel 5.5s linear infinite,
+    field-alternate 340ms steps(2, jump-none) infinite;
+}
+
+/* Decorative flicker, and the kind most likely to bother someone sensitive to
+   it, so the band goes entirely. The static field lines stay. */
+@media (prefers-reduced-motion: reduce) {
+  .crt-band {
+    display: none;
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.caret::after {
+  content: "_";
+  animation: caret-blink 1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

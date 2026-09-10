@@ -1,0 +1,50 @@
+---
+title: ClipSphere
+slug: clipsphere
+year: 2026
+order: 6
+role: Payments and deployment, team project
+stack: [Node.js, Express, MongoDB, Stripe, Socket.IO, Docker, nginx, MinIO]
+summary: A short video social platform. I built creator tipping on Stripe, the offline notification queue, and the container deployment.
+---
+
+{/* TODO: add `cover: /projects/clipsphere.png` to the frontmatter above once a real screenshot exists */}
+
+ClipSphere is a short video platform with uploads, feeds, likes, comments,
+follows, admin moderation and creator payouts, built by a team with the work
+split across sections. Mine were payments, real-time delivery and deployment.
+
+## Creator tipping on Stripe
+
+Viewers tip creators through Stripe Checkout. Money that moves in a webhook
+handler has one hard requirement: the same event can arrive twice, and it must
+not pay out twice.
+
+Two things enforce that. Every transaction carries a unique index on its
+`stripePaymentId`, so a duplicate cannot be written even under a race, and the
+service checks for an already-completed transaction before crediting a balance,
+returning `already_completed` rather than applying the tip again. Webhook
+signatures are verified against the endpoint secret before the payload is read
+at all, and an unrecognised event type is acknowledged rather than rejected, so
+Stripe does not retry something we deliberately ignore.
+
+The amount is read back from Stripe rather than trusted from the request, and
+falls back to retrieving the payment intent when the session does not carry a
+total.
+
+## Notifications that survive being offline
+
+Tips, likes and follows notify the creator over Socket.IO. A creator who is not
+connected at that moment would otherwise never learn it happened.
+
+Notifications now go through a queue: if the recipient has no live socket, the
+event is buffered against their user id, capped so an absent user cannot grow it
+without limit, and flushed in order the moment they reconnect.
+
+## Deployment
+
+The stack runs as containers behind nginx: the Express API, the Next.js
+frontend, MongoDB, Redis, and MinIO for video storage with its CORS policy
+applied at startup. The Stripe CLI runs as its own service so webhooks reach the
+API in local development, which is the only honest way to test a webhook path
+before it handles real money.

@@ -1,0 +1,22 @@
+---
+title: Sukuk Donations Platform
+slug: sukuk-donations
+year: 2026
+order: 1
+role: Full-stack developer, Ministry of Endowments
+stack: [ASP.NET Core, React, SQL Server]
+summary: A sukuk donations platform in production, generating over 100M EGP in profit to date.
+featured: true
+---
+
+{/* TODO: add `cover: /projects/<slug>.png` to the frontmatter above once a real screenshot exists */}
+
+A sukuk is an Islamic bond. This platform covers the full lifecycle of one:
+CRM, ERP, inventory, and distribution across multiple endowment units. It is
+live in production and has generated over 100M EGP in profit to date.
+
+The hard part was the data model. Donor management, endowment unit accounting,
+physical asset inventory, and disbursement workflows all have to stay consistent
+with each other, while respecting Islamic finance compliance rules around fund
+segregation. Those rules shaped the schema rather than sitting on top of it as
+validation.
