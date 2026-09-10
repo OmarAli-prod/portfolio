@@ -45,7 +45,7 @@ export function ProjectArticle({
         /* Duotone: desaturate, then push the remaining tone to the phosphor hue
            so a screenshot reads as terminal-native rather than pasted in. */
         <Image
-          src={project.cover}
+          src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${project.cover}`}
           alt={`Screenshot of ${project.title}`}
           width={1280}
           height={800}
