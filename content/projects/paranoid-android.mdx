@@ -1,0 +1,56 @@
+---
+title: Paranoid Android
+slug: paranoid-android
+year: 2026
+order: 2
+role: Solo project
+stack: [Go, Next.js, Docker, YAML, apktool, jadx, SARIF]
+summary: A static analysis security auditor for Android APKs, running 180+ rules inside a hardened sandbox and mapping findings to OWASP MASVS and CWE.
+featured: true
+---
+
+{/* TODO: add `cover: /projects/paranoid-android.png` to the frontmatter above once a real screenshot exists */}
+
+Paranoid Android audits an Android APK without trusting it. Point it at an APK
+and it decompiles the app, runs more than 180 security rules across the
+manifest, resources, Java and Kotlin sources and native code, and reports
+findings mapped to OWASP MASVS and CWE.
+
+## The decompiler is attack surface
+
+apktool and jadx are large JVM programs whose whole job is parsing untrusted
+files. Run them directly and your laptop becomes part of the attack surface,
+which most Android security tools never consider.
+
+Here every decompile runs in a Docker container with the network disabled, a
+read-only root filesystem, all Linux capabilities dropped and
+`no-new-privileges` set. The APK goes in read-only, findings come back out, and
+nothing else crosses the boundary.
+
+## Rules that do not cry wolf
+
+The engine is Go, scanning patterns concurrently and orchestrating the rules,
+which are defined in YAML as either regex patterns or structured named checks.
+
+Anything with a defined structure gets a structured check. The manifest XML is
+parsed once and its attributes checked programmatically, which keeps false
+positives far lower than regex over raw text.
+
+Secrets detection leans on domain knowledge rather than entropy heuristics.
+Provider specific patterns such as `sk_live_*` for Stripe and `AIza*` for
+Firebase catch real credentials without the noise, and evidence is masked in
+every finding so a detected secret never leaks into logs.
+
+## Built for triage and CI
+
+Against a deliberately vulnerable Android app it ran 184 rules and returned 90
+findings in about a second. Raw volume is not the point, though: severity and
+confidence filtering is what makes the output usable.
+
+Reports come out as JSON, SARIF, Markdown or CLI output, with a Next.js
+dashboard for exploring them interactively, because a CI pipeline, a code
+scanning tab and a human reviewer each want a different shape.
+
+Exit codes carry meaning, `0` for clean, `1` for findings above the threshold
+and `2` for operational errors, so automation never has to parse output. A
+single `--fail-on high --sarif report.sarif` drops it into GitHub Actions.
