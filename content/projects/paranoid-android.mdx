@@ -16,7 +16,7 @@ and it decompiles the app, runs more than 180 security rules across the
 manifest, resources, Java and Kotlin sources and native code, and reports
 findings mapped to OWASP MASVS and CWE.
 
-## The decompiler is attack surface
+## The decompiler is an attack surface
 
 apktool and jadx are large JVM programs whose whole job is parsing untrusted
 files. Run them directly and your laptop becomes part of the attack surface,
@@ -26,8 +26,6 @@ Here every decompile runs in a Docker container with the network disabled, a
 read-only root filesystem, all Linux capabilities dropped and
 `no-new-privileges` set. The APK goes in read-only, findings come back out, and
 nothing else crosses the boundary.
-
-## Rules that do not cry wolf
 
 The engine is Go, scanning patterns concurrently and orchestrating the rules,
 which are defined in YAML as either regex patterns or structured named checks.
