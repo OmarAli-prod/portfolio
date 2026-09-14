@@ -1,4 +1,4 @@
-import { GithubLogo, LinkedinLogo, EnvelopeSimple, Phone } from '@phosphor-icons/react/dist/ssr'
+import { GithubLogo, LinkedinLogo, EnvelopeSimple, Phone, FileText } from '@phosphor-icons/react/dist/ssr'
 
 const SKILLS: [string, string][] = [
   ['Languages', 'C#, TypeScript, JavaScript, Go, Python, C++, SQL, Bash'],
@@ -9,6 +9,8 @@ const SKILLS: [string, string][] = [
 ]
 
 const LINKS = [
+  // Absolute-looking but not external: prefixed so it resolves under the Pages basePath.
+  { href: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/resume.pdf`, label: 'resume.pdf', Icon: FileText },
   { href: 'https://github.com/Indentationless', label: 'Indentationless', Icon: GithubLogo },
   {
     href: 'https://linkedin.com/in/omar-ali-ismail',
@@ -76,7 +78,7 @@ export function AboutPanel() {
             <a
               key={href}
               href={href}
-              target={href.startsWith('http') ? '_blank' : undefined}
+              target={href.startsWith('http') || href.endsWith('.pdf') ? '_blank' : undefined}
               rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
               className="flex items-center gap-2 text-phosphor-dim transition-transform hover:text-phosphor active:scale-[0.98]"
             >
