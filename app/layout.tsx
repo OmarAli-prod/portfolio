@@ -24,8 +24,8 @@ const plexMono = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'Selected Work',
-  description: 'A developer portfolio.',
+  title: 'Omar Ali',
+  description: 'a developer',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
