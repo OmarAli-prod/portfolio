@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { Briefcase, FolderOpen } from '@phosphor-icons/react'
+import { motion } from 'motion/react'
+import { fly } from '@/lib/mode'
 
 export type IconItem = {
   /** Namespaced window id, e.g. "role/innova" or "project/sukuk-donations". */
@@ -31,10 +33,13 @@ export function DesktopIcons({
   groups,
   onOpen,
   onSelect,
+  layout = false,
 }: {
   groups: IconGroup[]
   onOpen: (id: string) => void
   onSelect?: () => void
+  /** Tag items with layoutIds so they fly into simple mode. One instance only. */
+  layout?: boolean
 }) {
   const [selected, setSelected] = useState(0)
   const refs = useRef<(HTMLAnchorElement | null)[]>([])
@@ -80,16 +85,19 @@ export function DesktopIcons({
         const Icon = group.kind === 'role' ? Briefcase : FolderOpen
         return (
           <section key={group.label} className="border-b border-phosphor-lo py-2 last:border-b-0">
-            <h2 className="px-3 py-1 text-[0.7rem] tracking-[0.2em] text-phosphor-lo">
+            <motion.h2
+              {...(layout && { layoutId: `group-${group.label}`, layout: 'position', transition: fly(index + 15) })}
+              className="px-3 py-1 text-[0.7rem] tracking-[0.2em] text-phosphor-lo">
               {group.label}
-            </h2>
+            </motion.h2>
             <ul className="flex flex-col">
               {group.items.map((item) => {
                 index += 1
                 const i = index
                 return (
                   <li key={item.id}>
-                    <a
+                    <motion.a
+                      {...(layout && { layoutId: item.id, layout: 'position', transition: fly(i + 15) })}
                       ref={(el) => {
                         refs.current[i] = el
                       }}
@@ -116,7 +124,7 @@ export function DesktopIcons({
                           {item.meta}
                         </span>
                       </span>
-                    </a>
+                    </motion.a>
                   </li>
                 )
               })}

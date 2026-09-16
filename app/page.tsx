@@ -3,7 +3,6 @@ import { getRoles } from '@/lib/roles'
 import { Desktop } from '@/components/desktop'
 import { projectId, roleId } from '@/lib/ids'
 import { ProjectBody } from '@/components/project-body'
-import { AboutPanel } from '@/components/about-panel'
 
 export default async function Home() {
   const [projects, roles] = await Promise.all([getProjects(), getRoles()])
@@ -20,6 +19,6 @@ export default async function Home() {
   }
 
   return (
-    <Desktop roles={roles} projects={projects} bodies={bodies} about={<AboutPanel />} />
+    <Desktop roles={roles} projects={projects} bodies={bodies} />
   )
 }

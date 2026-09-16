@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, MotionConfig, MotionGlobalConfig, motion } from 'motion/react'
 import { windowsReducer, initialWindowsState, focusedId } from '@/lib/windows'
 import { createSfx, loadMuted, saveMuted } from '@/lib/sfx'
 import { DesktopIcons, type IconGroup } from '@/components/desktop-icons'
@@ -12,19 +12,20 @@ import { Taskbar } from '@/components/taskbar'
 import type { Project } from '@/lib/projects'
 import type { Role } from '@/lib/roles'
 import { projectId, roleId } from '@/lib/ids'
+import { AboutPanel } from '@/components/about-panel'
+import { ModeDialog, SimpleSite } from '@/components/simple-site'
+import { loadMode, saveMode, type Mode } from '@/lib/mode'
 
 export function Desktop({
   roles,
   projects,
   bodies,
-  about,
 }: {
   roles: Role[]
   projects: Project[]
   /** Compiled MDX bodies keyed by namespaced id. Compiled in a Server
       Component and passed in, because MDXRemote cannot run in a client tree. */
   bodies: Record<string, React.ReactNode>
-  about: React.ReactNode
 }) {
   const [state, dispatch] = useReducer(windowsReducer, initialWindowsState)
   // Below lg the desktop becomes a single column and a window is a full-screen
@@ -47,6 +48,32 @@ export function Desktop({
       sfx.current?.dispose()
       sfx.current = null
     }
+  }, [])
+
+  // Simple mode is a wide-screen choice: below lg the layout is already one column.
+  const [mode, setMode] = useState<Mode>('interface')
+  const [asking, setAsking] = useState(false)
+
+  useEffect(() => {
+    if (!window.matchMedia('(min-width: 64rem)').matches) return
+    const stored = loadMode()
+    if (!stored) return setAsking(true)
+    if (stored === 'interface') return
+    // Restoring on reload should land, not replay the construction.
+    MotionGlobalConfig.instantAnimations = true
+    setMode(stored)
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => (MotionGlobalConfig.instantAnimations = false)),
+    )
+  }, [])
+
+  const pickMode = useCallback((next: Mode) => {
+    saveMode(next)
+    setAsking(false)
+    sfx.current?.play('open')
+    // Pieces fly from where they are on screen, so start from the top.
+    window.scrollTo(0, 0)
+    setMode(next)
   }, [])
 
   const toggleMute = useCallback(() => {
@@ -182,11 +209,13 @@ export function Desktop({
   const sheetEntry = sheetId ? entries.get(sheetId) : undefined
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
+      <AnimatePresence>{asking && <ModeDialog onPick={pickMode} />}</AnimatePresence>
+
       {/* Both layouts are in the markup and CSS picks one, so a phone never
           flashes the desktop before hydration. */}
       <main className="graticule grid min-h-dvh content-start gap-3 p-3 md:grid-cols-2 md:items-start lg:hidden" inert={Boolean(sheetEntry)}>
-        {about}
+        <AboutPanel />
 
         <nav
           aria-label="Experience and projects"
@@ -232,63 +261,75 @@ export function Desktop({
         )}
       </AnimatePresence>
 
-      <main className="graticule hidden h-dvh overflow-hidden pb-9 lg:flex">
-        <nav
-          aria-label="Experience and projects"
-          className="w-48 shrink-0 overflow-y-auto border-r border-phosphor-lo"
-        >
-          <DesktopIcons groups={groups} onOpen={open} onSelect={() => sfx.current?.play('tick')} />
-        </nav>
-
-        <div ref={canvas} className="relative min-w-0 flex-1">
-          <AnimatePresence>
-            {state.windows
-              .filter((w) => !w.minimized)
-              .map((w) => {
-                const entry = entries.get(w.id)
-                if (!entry) return null
-                return (
-                  <TerminalWindow
-                    key={w.id}
-                    state={w}
-                    title={entry.title}
-                    focused={focused === w.id}
-                    onFocus={() => dispatch({ type: 'focus', id: w.id })}
-                    onClose={() => close(w.id)}
-                    onMinimize={() => dispatch({ type: 'minimize', id: w.id })}
-                    onMove={(x, y) => dispatch({ type: 'move', id: w.id, x, y })}
-                    onResize={(x, y, width, height) =>
-                      dispatch({ type: 'resize', id: w.id, x, y, w: width, h: height })
-                    }
-                  >
-                    {entry.render()}
-                  </TerminalWindow>
-                )
-              })}
-          </AnimatePresence>
-
-          {state.windows.length === 0 && (
-            <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-8 text-center text-sm text-phosphor-lo">
-              Select a role or project to open it.
-            </p>
-          )}
-        </div>
-
-        {/* Static: outside the window reducer, so nothing can be dragged over it. */}
-        <div className="w-84 shrink-0 overflow-hidden p-3 xl:w-100">{about}</div>
-
-        <Taskbar
-          entries={state.windows.map((w) => ({
-            id: w.id,
-            title: entries.get(w.id)?.title ?? w.id,
-            minimized: w.minimized,
-          }))}
-          focusedId={focused}
-          onRestore={open}
-          muted={muted}
-          onToggleMute={toggleMute}
+      {mode === 'simple' ? (
+        <SimpleSite
+          roles={roles}
+          projects={projects}
+          bodies={bodies}
+          onInterface={() => pickMode('interface')}
         />
-      </main>
-    </>
+      ) : (
+        <main className="graticule hidden h-dvh overflow-hidden pb-9 lg:flex">
+          <nav
+            aria-label="Experience and projects"
+            className="w-48 shrink-0 overflow-y-auto border-r border-phosphor-lo"
+          >
+            <DesktopIcons layout groups={groups} onOpen={open} onSelect={() => sfx.current?.play('tick')} />
+          </nav>
+
+          <div ref={canvas} className="relative min-w-0 flex-1">
+            <AnimatePresence>
+              {state.windows
+                .filter((w) => !w.minimized)
+                .map((w) => {
+                  const entry = entries.get(w.id)
+                  if (!entry) return null
+                  return (
+                    <TerminalWindow
+                      key={w.id}
+                      state={w}
+                      title={entry.title}
+                      focused={focused === w.id}
+                      onFocus={() => dispatch({ type: 'focus', id: w.id })}
+                      onClose={() => close(w.id)}
+                      onMinimize={() => dispatch({ type: 'minimize', id: w.id })}
+                      onMove={(x, y) => dispatch({ type: 'move', id: w.id, x, y })}
+                      onResize={(x, y, width, height) =>
+                        dispatch({ type: 'resize', id: w.id, x, y, w: width, h: height })
+                      }
+                    >
+                      {entry.render()}
+                    </TerminalWindow>
+                  )
+                })}
+            </AnimatePresence>
+
+            {state.windows.length === 0 && (
+              <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-8 text-center text-sm text-phosphor-lo">
+                Select a role or project to open it.
+              </p>
+            )}
+          </div>
+
+          {/* Static: outside the window reducer, so nothing can be dragged over it. */}
+          <div className="w-84 shrink-0 overflow-hidden p-3 xl:w-100">
+            <AboutPanel layout />
+          </div>
+
+          <Taskbar
+            entries={state.windows.map((w) => ({
+              id: w.id,
+              title: entries.get(w.id)?.title ?? w.id,
+              minimized: w.minimized,
+            }))}
+            focusedId={focused}
+            onRestore={open}
+            muted={muted}
+            onToggleMute={toggleMute}
+            onSimple={() => pickMode('simple')}
+          />
+        </main>
+      )}
+    </MotionConfig>
   )
 }
