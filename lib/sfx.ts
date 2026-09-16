@@ -14,9 +14,9 @@ const STORAGE_KEY = 'crt-portfolio-muted'
 export function loadMuted(): boolean {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw === null ? true : raw === 'true'
+    return raw === 'true'
   } catch {
-    return true
+    return false
   }
 }
 
