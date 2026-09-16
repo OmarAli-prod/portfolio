@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { Article, Monitor } from '@phosphor-icons/react'
 import { BIO, EDUCATION, LINKS, SKILLS, TAGLINE, linkTarget } from '@/components/about-panel'
 import { fly, type Mode } from '@/lib/mode'
@@ -235,14 +235,30 @@ function Entry({
   )
 }
 
+/** CRT power-on: a lit dot, stretched into a scanline, then opened to full
+    height, bright at first and settling. Power-off plays it backwards. */
+const POWER_ON = {
+  scaleX: [0, 1, 1],
+  scaleY: [0.004, 0.004, 1],
+  filter: ['brightness(6)', 'brightness(4)', 'brightness(1)'],
+  transition: { duration: 0.5, times: [0, 0.4, 1], ease: 'easeOut' as const, delay: 0.18 },
+}
+const POWER_OFF = {
+  scaleX: [1, 1, 0],
+  scaleY: [1, 0.004, 0.004],
+  filter: ['brightness(1)', 'brightness(4)', 'brightness(6)'],
+  transition: { duration: 0.3, times: [0, 0.6, 1], ease: 'easeIn' as const },
+}
+
 /**
- * Asked once per session, on wide screens, right after boot. Mounted under the
- * boot overlay (z-60 vs z-70), so it is simply revealed when boot ends. Focus
- * goes to the dialog, not a button, so the key that skips boot cannot also
- * pick a mode.
+ * Asked once per session, on wide screens, once boot has finished. Focus goes
+ * to the dialog, not a button, so the key that skips boot cannot also pick a
+ * mode.
  */
 export function ModeDialog({ onPick }: { onPick: (mode: Mode) => void }) {
   const ref = useRef<HTMLDivElement>(null)
+  // The flash is exactly what reduced motion is for: those visitors get a fade.
+  const reduced = useReducedMotion()
 
   useEffect(() => {
     ref.current?.focus({ preventScroll: true })
@@ -270,19 +286,31 @@ export function ModeDialog({ onPick }: { onPick: (mode: Mode) => void }) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      exit={{ opacity: 0, transition: { duration: 0.2, delay: reduced ? 0 : 0.35 } }}
       className="fixed inset-0 z-60 flex items-center justify-center bg-bg/80 p-6"
     >
+      {!reduced && (
+        /* The spark: the electron beam hitting the centre of the tube. */
+        <motion.span
+          aria-hidden="true"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: [0, 1.6, 0.6], opacity: [0, 1, 0] }}
+          exit={{ scale: [0.6, 1.4, 0], opacity: [0, 1, 0], transition: { duration: 0.3, delay: 0.25 } }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="pointer-events-none absolute left-1/2 top-1/2 -ml-1 -mt-1 size-2 bg-[#fff4d6] shadow-[0_0_12px_4px_var(--color-phosphor),0_0_40px_12px_color-mix(in_srgb,var(--color-phosphor)_50%,transparent)]"
+          // Inline, because the global shape lock squares every corner.
+          style={{ borderRadius: '50%' }}
+        />
+      )}
       <motion.div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-labelledby="mode-title"
         tabIndex={-1}
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 8 }}
-        transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+        initial={reduced ? { opacity: 0 } : { scaleX: 0, scaleY: 0.004 }}
+        animate={reduced ? { opacity: 1 } : POWER_ON}
+        exit={reduced ? { opacity: 0 } : POWER_OFF}
         className="w-full max-w-xl border border-phosphor-lo bg-bg-raised outline-none"
       >
         <div className="border-b border-phosphor-lo bg-bg-chrome px-3 py-1.5">

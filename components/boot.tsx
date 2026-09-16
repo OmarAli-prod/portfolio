@@ -40,6 +40,12 @@ export function Boot() {
     setPhase(booted || reduced ? 'done' : 'running')
   }, [])
 
+  // Announced on every path to done (played, skipped, or never needed), so
+  // whatever waits on boot does not have to know which one happened.
+  useEffect(() => {
+    if (phase === 'done') window.dispatchEvent(new Event('boot:done'))
+  }, [phase])
+
   // Drive the lines and listen for a skip. Only while actually running.
   useEffect(() => {
     if (phase !== 'running') return

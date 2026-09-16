@@ -53,6 +53,14 @@ export function Desktop({
   // Simple mode is a wide-screen choice: below lg the layout is already one column.
   const [mode, setMode] = useState<Mode>('interface')
   const [asking, setAsking] = useState(false)
+  // The dialog powers on when boot ends; under the boot overlay nobody sees it.
+  const [booted, setBooted] = useState(false)
+
+  useEffect(() => {
+    const done = () => setBooted(true)
+    window.addEventListener('boot:done', done)
+    return () => window.removeEventListener('boot:done', done)
+  }, [])
 
   useEffect(() => {
     if (!window.matchMedia('(min-width: 64rem)').matches) return
@@ -210,7 +218,7 @@ export function Desktop({
 
   return (
     <MotionConfig reducedMotion="user">
-      <AnimatePresence>{asking && <ModeDialog onPick={pickMode} />}</AnimatePresence>
+      <AnimatePresence>{asking && booted && <ModeDialog onPick={pickMode} />}</AnimatePresence>
 
       {/* Both layouts are in the markup and CSS picks one, so a phone never
           flashes the desktop before hydration. */}
